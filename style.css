@@ -37,8 +37,8 @@ html{
   height:100px;
   width: auto;
 }
-.error, .borders{
-  opacity: 0;
+.error, .borders, .loading{
+  display:none;
 }
 
 .borders{

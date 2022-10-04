@@ -21,20 +21,20 @@ function setCountry(data) {
           <li class="list-group-item">Capital: ${country.capital[0]}</li>
           <li class="list-group-item">Population: ${(country.population > 1000000 ? (country.population/1000000).toFixed(1)+"M" : country.population)}</li>
           <li class="list-group-item">Languages: ${Object.values(country.languages)}</li>
-          <li class="list-group-item">Currencies: ${country.currencies[Object.keys(country.currencies)].name} ${country.currencies[Object.keys(country.currencies)].symbol} </li>
+          <li class="list-group-item">Currencies: ${country.currencies[Object.keys(country.currencies)[0]].name} ${country.currencies[Object.keys(country.currencies)[0]].symbol} </li>
         </ul>
       </div>
     </div>
   </div>
 </div>
   `;
-
+  document.querySelector(".loading").style.display="none";
   document.querySelector('.country .row').insertAdjacentHTML('beforeend', countryCard);
 }
 
 function setBorders(data) {
   document.querySelector('.borders .row').innerHTML = "";
-  document.querySelector('.borders').style.opacity = 1;
+  document.querySelector('.borders').style.display = 'block';
   for (let country of data) {
     const borderCard = `
     <div class="card border-card">
@@ -55,21 +55,57 @@ function setBorders(data) {
 }
 
 function handleErrors(data){
-      if(data=="No country"){
-        document.querySelector('.error .alert').innerHTML = "There is no such country! Please try again!";
-        document.querySelector('.error').style.opacity = 1;
+      document.querySelector(".loading").style.display='none';
+      if(data=="Location Api Error"){
+        document.querySelector('.error .alert').innerHTML = "Some troubles occured on location finding. Please try to search by writing";
+        document.querySelector('.error').style.display = 'block';
         document.querySelector('.country .row').innerHTML = "";
-        document.querySelector('.borders').style.opacity = 0;
+        document.querySelector('.borders').style.display = 'none';
         setTimeout(() => {
-          document.querySelector('.error').style.opacity = 0;
+          document.querySelector('.error').style.display = 'none';
+           }, 3500);
+      }
+      else if(data=="No country"){
+        document.querySelector('.error .alert').innerHTML = "There is no such country! Please try again!";
+        document.querySelector('.error').style.display = 'block';
+        document.querySelector('.country .row').innerHTML = "";
+        document.querySelector('.borders').style.display = 'none';
+        setTimeout(() => {
+          document.querySelector('.error').style.display = 'none';
            }, 3500);
       }else{
-        document.querySelector('.borders').style.opacity = 1;
+        document.querySelector('.borders').style.display = 'block';
         document.querySelector('.borders .card-body').innerHTML = "This country has no neighbors";
       }
 }
 
+async function locSuccess(position){
+  try{
+      const long = position.coords.longitude;
+      const lat = position.coords.latitude;
+      const api_key= ''; // put your own api_key
+      const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${long}&key=${api_key}`;
+      const response = await fetch(url);
+      console.log(response.ok);
+      if(!response.ok){
+        throw new Error("Location Api Error");
+      }
+      const data = await response.json();
+      const location = data.results[0].components['ISO_3166-1_alpha-3'];
+      document.querySelector(".searchText").value=location;
+      document.querySelector('.btn-search').click();
+    }catch(err){
+      handleErrors("Location Api Error");
+    }
+
+}
+
+function locErr(err){
+  handleErrors("Location Api Error");
+}
+
 document.querySelector(".btn-search").addEventListener('click', () => {
+  document.querySelector(".loading").style.display='block';
   const country = document.querySelector(".searchText").value;
   //console.log(country);
   // In version 1 we use XMLHttpRequest
@@ -136,4 +172,10 @@ document.querySelector(".btn-search").addEventListener('click', () => {
   // });
 
 
+});
+
+document.querySelector(".btn-location").addEventListener('click', () => {
+  if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(locSuccess,locErr);
+  }
 });

@@ -1,4 +1,4 @@
-# Find the country and its neighboors
+# Find the country and its neighbors
 
 ### Description  
 <hr>
